@@ -41,7 +41,6 @@ export default function SignUp() {
   const [usePasswordReset, setUsePasswordReset] = useState(false);
   
   const { signup, error: authError, user, signout, sendEmailVerification } = useAuthContext();
-  const router = useRouter();
 
   // Monitor auth state changes
   useEffect(() => {
@@ -184,15 +183,18 @@ export default function SignUp() {
         
         setSuccessMessage('A password reset link has been sent instead. You can use this to verify your account by setting a new password.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Resend verification error:", error);
       
       // Handle specific Firebase errors
-      if (error.code === 'auth/too-many-requests') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'auth/too-many-requests') {
         setErrorMessage('Too many verification attempts. Please wait a few minutes before trying again.');
         setCooldownActive(true);
       } else {
-        setErrorMessage(`Failed to send email: ${error.message}`);
+        const errorMessage = error && typeof error === 'object' && 'message' in error 
+          ? String(error.message) 
+          : 'Unknown error occurred';
+        setErrorMessage(`Failed to send email: ${errorMessage}`);
       }
     } finally {
       setResendingVerification(false);
@@ -239,9 +241,12 @@ export default function SignUp() {
         await sendEmailVerification(userCredential.user);
         setVerificationSent(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Signup error:", error);
-      setErrorMessage(error.message || 'Failed to create account. Please try again.');
+      const errorMessage = error && typeof error === 'object' && 'message' in error 
+        ? String(error.message) 
+        : 'Failed to create account. Please try again.';
+      setErrorMessage(errorMessage);
       setIsLoading(false);
     }
   };
@@ -256,14 +261,14 @@ export default function SignUp() {
               <FiCheckCircle className="mx-auto h-12 w-12 text-green-500" />
               <h2 className="mt-4 text-3xl font-extrabold text-gray-900">Verify your email</h2>
               <p className="mt-2 text-sm text-gray-600">
-                We've sent a verification link to <span className="font-medium">{email}</span>
+                We&apos;ve sent a verification link to <span className="font-medium">{email}</span>
               </p>
             </div>
             
             <div className="bg-blue-50 p-4 rounded-lg">
               <p className="text-sm text-blue-700">
                 Please check your email and click the verification link to activate your account. 
-                If you don't see the email, check your spam folder.
+                If you don&apos;t see the email, check your spam folder.
               </p>
             </div>
             
@@ -271,7 +276,7 @@ export default function SignUp() {
               <div className="mt-4 bg-yellow-50 p-4 rounded-lg flex items-start">
                 <FiInfo className="text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
                 <p className="text-sm text-yellow-700">
-                  Due to security limits, we've sent you a password reset link instead. 
+                  Due to security limits, we&apos;ve sent you a password reset link instead. 
                   You can use this to verify your account by setting a new password.
                 </p>
               </div>

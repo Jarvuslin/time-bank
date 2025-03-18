@@ -69,7 +69,7 @@ export default function ForgotPassword() {
             <FiMail className="mx-auto h-12 w-12 text-indigo-500" />
             <h2 className="mt-4 text-3xl font-extrabold text-gray-900">Reset your password</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Enter the email address associated with your account, and we'll send you a link to reset your password.
+              Enter the email address associated with your account, and we&apos;ll send you a link to reset your password.
             </p>
           </div>
           

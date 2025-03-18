@@ -76,8 +76,11 @@ export default function Home() {
       } else {
         setErrorInfo("Firebase auth not initialized");
       }
-    } catch (err: any) {
-      setErrorInfo(err.message || "Error initializing Firebase");
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? String(err.message) 
+        : "Error initializing Firebase";
+      setErrorInfo(errorMessage);
       console.error("Firebase init error:", err);
     }
   }, []);
@@ -191,7 +194,7 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 italic">"{testimonial.quote}"</p>
+                <p className="text-gray-700 mb-6 italic">&quot;{testimonial.quote}&quot;</p>
                 <div>
                   <p className="font-semibold">{testimonial.author}</p>
                   <p className="text-gray-500 text-sm">{testimonial.role}</p>

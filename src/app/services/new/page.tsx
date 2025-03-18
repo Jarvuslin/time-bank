@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, SubmitHandler, UseFormRegister } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { useAuthContext } from '@/firebase/AuthContext';
 import MainLayout from '@/components/layout/MainLayout';
 import { addService, ServiceCategory, ServiceItem } from '@/firebase/services';
@@ -94,12 +94,13 @@ export default function NewServicePage() {
       const result = await addService(serviceData);
       addDebugInfo(`Service created successfully with ID: ${result?.id || 'unknown'}`);
       return result;
-    } catch (err: any) {
-      addDebugInfo(`Error creating service: ${err.message}`);
+    } catch (err: unknown) {
+      const error = err as { message?: string; retry?: boolean };
+      addDebugInfo(`Error creating service: ${error.message || String(err)}`);
       
       // If it's a timeout error and we haven't retried too many times, throw a special error
-      if ((err.message?.includes('timeout') || err.message?.includes('taking longer')) && retryCount < 2) {
-        err.retry = true;
+      if ((error.message?.includes('timeout') || error.message?.includes('taking longer')) && retryCount < 2) {
+        error.retry = true;
       }
       throw err;
     }
@@ -162,7 +163,7 @@ export default function NewServicePage() {
             status: 'available',
           };
 
-          const result = await createService(newService);
+          await createService(newService);
           
           setSuccess(true);
           setCreatedServiceTitle(data.title);
@@ -170,13 +171,14 @@ export default function NewServicePage() {
           // Reset retry count on success
           setRetryCount(0);
           setRetryMode(false);
-        } catch (serviceErr: any) {
-          if (serviceErr.retry) {
+        } catch (serviceErr: unknown) {
+          const error = serviceErr as { retry?: boolean; message?: string };
+          if (error.retry) {
             // Show retry UI
             setRetryMode(true);
             setError(`Timeout occurred (attempt ${retryCount + 1}/3). Click "Retry" to try again.`);
           } else {
-            addDebugInfo(`Error in fallback flow: ${serviceErr.message || 'Unknown error'}`);
+            addDebugInfo(`Error in fallback flow: ${error.message || 'Unknown error'}`);
             handleServiceCreationError(serviceErr);
           }
         }
@@ -194,7 +196,7 @@ export default function NewServicePage() {
       };
 
       try {
-        const result = await createService(newService);
+        await createService(newService);
         
         setSuccess(true);
         setCreatedServiceTitle(data.title);
@@ -202,13 +204,14 @@ export default function NewServicePage() {
         // Reset retry count on success
         setRetryCount(0);
         setRetryMode(false);
-      } catch (err: any) {
-        if (err.retry) {
+      } catch (err: unknown) {
+        const error = err as { retry?: boolean; message?: string };
+        if (error.retry) {
           // Show retry UI
           setRetryMode(true);
           setError(`Timeout occurred (attempt ${retryCount + 1}/3). Click "Retry" to try again.`);
         } else {
-          addDebugInfo(`Error in normal flow: ${err.message || 'Unknown error'}`);
+          addDebugInfo(`Error in normal flow: ${error.message || 'Unknown error'}`);
           handleServiceCreationError(err);
         }
       }
@@ -222,16 +225,17 @@ export default function NewServicePage() {
   };
 
   // Helper function to handle service creation errors
-  const handleServiceCreationError = (err: any) => {
-    if (err.code === 'auth/invalid-credential' || err.message?.includes('invalid-credential')) {
+  const handleServiceCreationError = (err: unknown) => {
+    const error = err as { code?: string; message?: string };
+    if (error.code === 'auth/invalid-credential' || error.message?.includes('invalid-credential')) {
       setError('Your login session has expired. Please sign in again.');
       setTimeout(() => {
         router.push('/auth/signin?redirect=/services/new');
       }, 2000);
-    } else if (err.message?.includes('Unable to connect') || 
-               err.message?.includes('network') || 
-               err.message?.includes('offline') ||
-               err.message?.includes('ping failed')) {
+    } else if (error.message?.includes('Unable to connect') || 
+               error.message?.includes('network') || 
+               error.message?.includes('offline') ||
+               error.message?.includes('ping failed')) {
       
       setError('Connection issue detected. We\'ll try to save your service in offline mode.');
       
@@ -254,16 +258,17 @@ export default function NewServicePage() {
         // Reset retry count
         setRetryCount(0);
         setRetryMode(false);
-      } catch (storageErr) {
+      } catch (storageErr: unknown) {
+        console.error("Storage error:", storageErr);
         setError('Failed to save service. Please try again later.');
       }
-    } else if (err.message?.includes('timeout') || err.message?.includes('taking longer')) {
+    } else if (error.message?.includes('timeout') || error.message?.includes('taking longer')) {
       // Handle timeout errors specifically
       setError('The operation is taking longer than expected. This may be due to a slow connection. ' +
                'You can try again or check your internet connection.');
       // Don't redirect - allow user to retry
     } else {
-      setError(err.message || 'Failed to create service. Please try again.');
+      setError(error.message || 'Failed to create service. Please try again.');
     }
     console.error('Error creating service:', err);
   };
@@ -504,7 +509,7 @@ export default function NewServicePage() {
               <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Success!</h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  Your service <span className="font-semibold">"{createdServiceTitle}"</span> has been successfully created!
+                  Your service <span className="font-semibold">&quot;{createdServiceTitle}&quot;</span> has been successfully created!
                 </p>
               </div>
               <div className="flex flex-col space-y-3 mt-5 px-4 py-3">

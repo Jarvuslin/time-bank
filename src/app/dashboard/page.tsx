@@ -16,7 +16,7 @@ interface ExtendedServiceRequest extends ServiceRequest {
 }
 
 export default function Dashboard() {
-  const { user, userData, loading, checkEmailVerified, deleteAccount } = useAuthContext();
+  const { user, userData, loading, checkEmailVerified } = useAuthContext();
   const router = useRouter();
   
   const [activeTab, setActiveTab] = useState('overview');
@@ -222,7 +222,7 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <p className="mt-4 text-sm text-gray-600">
-                        Total number of services you've provided to others.
+                        Total number of services you&apos;ve provided to others.
                       </p>
                     </div>
 
@@ -348,7 +348,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-                      <p className="text-gray-500 mb-4">You haven't offered any services yet.</p>
+                      <p className="text-gray-500 mb-4">You haven&apos;t offered any services yet.</p>
                       <Link href="/services/new" className="btn btn-primary">
                         Offer Your First Service
                       </Link>
@@ -411,7 +411,7 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-                        <p className="text-gray-500">You don't have any requests yet.</p>
+                        <p className="text-gray-500">You don&apos;t have any requests yet.</p>
                       </div>
                     )}
                   </div>
@@ -489,8 +489,11 @@ function DeleteAccountButton() {
       setIsDeleting(true);
       await deleteAccount();
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete account');
+    } catch (err: unknown) {
+      const errorMessage = err && typeof err === 'object' && 'message' in err 
+        ? String(err.message) 
+        : 'Failed to delete account';
+      setError(errorMessage);
       setIsDeleting(false);
       setShowConfirmation(false);
     }

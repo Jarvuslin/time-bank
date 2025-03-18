@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthContext } from '@/firebase/AuthContext';
@@ -50,7 +50,7 @@ export default function SignIn() {
             // Sign out again
             await signout();
           }
-        } catch (innerError) {
+        } catch (_innerError) {
           // This is expected as the signin will fail due to non-verification
           // But the verification email should have been sent
           setVerificationSent(true);
@@ -128,7 +128,7 @@ export default function SignIn() {
             ) : (
               <div className="bg-blue-50 p-4 rounded-lg">
                 <p className="text-sm text-blue-700">
-                  Please check your email for a verification link. If you can't find it, you can request a new one.
+                  Please check your email for a verification link. If you can&apos;t find it, you can request a new one.
                 </p>
               </div>
             )}
@@ -278,4 +278,4 @@ export default function SignIn() {
       </div>
     </MainLayout>
   );
-} 
+}
