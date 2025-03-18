@@ -1,0 +1,40 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background elements -->
+  <circle cx="400" cy="300" r="250" fill="#F3F4F6" opacity="0.5"/>
+  <circle cx="400" cy="300" r="200" fill="#E5E7EB" opacity="0.5"/>
+  
+  <!-- Clock icon -->
+  <circle cx="400" cy="300" r="150" fill="#EEF2FF" stroke="#4F46E5" stroke-width="8"/>
+  <circle cx="400" cy="300" r="10" fill="#4F46E5"/>
+  <line x1="400" y1="300" x2="400" y2="200" stroke="#4F46E5" stroke-width="8" stroke-linecap="round"/>
+  <line x1="400" y1="300" x2="480" y2="350" stroke="#4F46E5" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- People silhouettes -->
+  <!-- Person 1 -->
+  <circle cx="200" cy="250" r="40" fill="#818CF8"/>
+  <rect x="180" y="290" width="40" height="80" rx="20" fill="#818CF8"/>
+  <rect x="160" y="320" width="30" height="10" rx="5" fill="#818CF8"/>
+  <rect x="210" y="320" width="30" height="10" rx="5" fill="#818CF8"/>
+  
+  <!-- Person 2 -->
+  <circle cx="600" cy="250" r="40" fill="#818CF8"/>
+  <rect x="580" y="290" width="40" height="80" rx="20" fill="#818CF8"/>
+  <rect x="560" y="320" width="30" height="10" rx="5" fill="#818CF8"/>
+  <rect x="610" y="320" width="30" height="10" rx="5" fill="#818CF8"/>
+  
+  <!-- Connection lines -->
+  <line x1="240" y1="250" x2="360" y2="250" stroke="#4F46E5" stroke-width="4" stroke-dasharray="10 5"/>
+  <line x1="440" y1="250" x2="560" y2="250" stroke="#4F46E5" stroke-width="4" stroke-dasharray="10 5"/>
+  
+  <!-- Small decorative elements -->
+  <circle cx="300" cy="150" r="15" fill="#C7D2FE"/>
+  <circle cx="500" cy="150" r="15" fill="#C7D2FE"/>
+  <circle cx="300" cy="450" r="15" fill="#C7D2FE"/>
+  <circle cx="500" cy="450" r="15" fill="#C7D2FE"/>
+  
+  <!-- Stars -->
+  <path d="M150 100L157.5 115L175 115L160 125L167.5 140L150 130L132.5 140L140 125L125 115L142.5 115L150 100Z" fill="#A5B4FC"/>
+  <path d="M650 100L657.5 115L675 115L660 125L667.5 140L650 130L632.5 140L640 125L625 115L642.5 115L650 100Z" fill="#A5B4FC"/>
+  <path d="M150 500L157.5 515L175 515L160 525L167.5 540L150 530L132.5 540L140 525L125 515L142.5 515L150 500Z" fill="#A5B4FC"/>
+  <path d="M650 500L657.5 515L675 515L660 525L667.5 540L650 530L632.5 540L640 525L625 515L642.5 515L650 500Z" fill="#A5B4FC"/>
+</svg> 
