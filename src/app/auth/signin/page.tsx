@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthContext } from '@/firebase/AuthContext';
 import MainLayout from '@/components/layout/MainLayout';
 import { FiMail, FiLock, FiAlertCircle, FiRefreshCw, FiCheckCircle } from 'react-icons/fi';
 
-export default function SignIn() {
+// SignInContent component to use search params
+function SignInContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function SignIn() {
   const { signin, signup, signout, sendEmailVerification } = useAuthContext();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectPath = searchParams.get('redirect');
+  const redirectPath = searchParams?.get('redirect');
 
   // Handle resend verification email
   const handleResendVerification = async () => {
@@ -277,5 +278,22 @@ export default function SignIn() {
         </div>
       </div>
     </MainLayout>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <MainLayout>
+        <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
+          <div className="text-center">
+            <p>Loading sign in page...</p>
+            <div className="mt-4 w-8 h-8 border-t-2 border-b-2 border-gray-900 rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      </MainLayout>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }

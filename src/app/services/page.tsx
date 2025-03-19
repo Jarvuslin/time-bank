@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import MainLayout from '@/components/layout/MainLayout';
@@ -21,102 +21,83 @@ const categoryOptions = [
   { value: 'other', label: 'Other', icon: '📦' },
 ];
 
-export default function ServicesPage() {
+// ServicesContent component to use search params
+function ServicesContent() {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('category') as ServiceCategory | null;
+  const initialCategory = searchParams?.get('category') as ServiceCategory || null;
   
   const [services, setServices] = useState<ServiceItem[]>([]);
-  const [filteredServices, setFilteredServices] = useState<ServiceItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(initialCategory);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredServices, setFilteredServices] = useState<ServiceItem[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchServices = useCallback(async (isRefresh = false) => {
-    if (isRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    setLoadError(null);
-    
+  // Load services
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    setLoading(true);
+    setError('');
     try {
-      console.log("Fetching services for category:", selectedCategory || "all");
-      const data = await getAvailableServices(selectedCategory || undefined);
-      
-      // Check if we received data
-      if (data.length === 0 && !isRefresh) {
-        console.log("No services found, might be using fallback for timeout");
-      } else {
-        console.log(`Retrieved ${data.length} services`);
-      }
-      
-      setServices(data);
-      
-      // Apply any existing search filter to the new data
-      if (searchTerm.trim() === '') {
-        setFilteredServices(data);
-      } else {
-        const filtered = data.filter(
-          (service) =>
-            service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            service.description.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredServices(filtered);
-      }
-    } catch (error: any) {
-      console.error('Error fetching services:', error);
-      
-      // Custom handling for timeout errors
-      if (error.message?.includes('timeout') || error.message?.includes('too long')) {
-        setLoadError('The services are taking longer than expected to load. Please try again or check your connection.');
-      } else if (error.message?.includes('network') || !navigator.onLine) {
-        setLoadError('You appear to be offline. Please check your connection and try again.');
-      } else {
-        setLoadError(error.message || 'Failed to load services. Please try again.');
-      }
+      const availableServices = await getAvailableServices();
+      setServices(availableServices);
+      filterServices(availableServices, selectedCategory, searchTerm);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load services';
+      setError(errorMessage);
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      setLoading(false);
     }
-  }, [selectedCategory, searchTerm]);
+  };
 
-  useEffect(() => {
-    fetchServices();
-  }, [fetchServices]);
-
-  useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredServices(services);
-    } else {
-      const filtered = services.filter(
-        (service) =>
-          service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          service.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+  const filterServices = useCallback(
+    (services: ServiceItem[], category: ServiceCategory | null, search: string) => {
+      let filtered = [...services];
+      
+      // Filter by category if one is selected
+      if (category) {
+        filtered = filtered.filter(service => service.category === category);
+      }
+      
+      // Filter by search term if provided
+      if (search.trim()) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(service => 
+          service.title.toLowerCase().includes(searchLower) || 
+          service.description.toLowerCase().includes(searchLower)
+        );
+      }
+      
       setFilteredServices(filtered);
-    }
-  }, [searchTerm, services]);
+    },
+    []
+  );
+
+  useEffect(() => {
+    filterServices(services, selectedCategory, searchTerm);
+  }, [selectedCategory, searchTerm, services, filterServices]);
 
   const handleCategoryChange = (category: ServiceCategory | null) => {
     setSelectedCategory(category);
-    // fetchServices will be triggered by the useEffect dependency on selectedCategory
   };
 
   const clearFilters = () => {
-    setSearchTerm('');
     setSelectedCategory(null);
-    // fetchServices will be triggered by the useEffect dependency on selectedCategory
+    setSearchTerm('');
   };
 
   const handleRefresh = () => {
-    fetchServices(true);
+    setIsRefreshing(true);
+    loadServices().finally(() => setIsRefreshing(false));
   };
 
   return (
-    <MainLayout>
+    <>
       {/* Page Header */}
       <div className="bg-white rounded-lg shadow-card p-6 mb-6">
         <div className="flex justify-between items-center">
@@ -130,7 +111,7 @@ export default function ServicesPage() {
           {/* Refresh Button */}
           <button 
             onClick={handleRefresh}
-            disabled={isLoading || isRefreshing}
+            disabled={loading || isRefreshing}
             className="p-2 rounded-full bg-indigo-50 hover:bg-indigo-100 transition-colors"
             aria-label="Refresh services"
             title="Refresh services"
@@ -141,11 +122,11 @@ export default function ServicesPage() {
       </div>
 
       {/* Error Message */}
-      {loadError && (
+      {error && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md">
           <div className="flex items-center">
             <FiAlertCircle className="text-red-500 mr-2" />
-            <p className="text-sm text-red-700">{loadError}</p>
+            <p className="text-sm text-red-700">{error}</p>
             <button 
               onClick={handleRefresh}
               className="ml-auto flex items-center px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-xs font-medium rounded"
@@ -174,13 +155,13 @@ export default function ServicesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 pl-10 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Search by title or description"
-              disabled={isLoading}
+              disabled={loading}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500 transition-colors"
-                disabled={isLoading}
+                disabled={loading}
               >
                 <FiX className="h-4 w-4" />
               </button>
@@ -192,7 +173,7 @@ export default function ServicesPage() {
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 w-full"
-              disabled={isLoading}
+              disabled={loading}
             >
               <FiFilter className="mr-2 h-5 w-5 text-gray-500" />
               Filters
@@ -205,7 +186,7 @@ export default function ServicesPage() {
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-              disabled={isLoading}
+              disabled={loading}
             >
               <FiFilter className="mr-2 h-5 w-5 text-gray-500" />
               Category
@@ -243,7 +224,7 @@ export default function ServicesPage() {
                       ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                       : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                   }`}
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   <span className="mr-2">{category.icon}</span>
                   {category.label}
@@ -262,7 +243,7 @@ export default function ServicesPage() {
                 <button
                   onClick={clearFilters}
                   className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
-                  disabled={isLoading}
+                  disabled={loading}
                 >
                   Clear all filters
                 </button>
@@ -273,7 +254,7 @@ export default function ServicesPage() {
       </div>
 
       {/* Services List */}
-      {isLoading ? (
+      {loading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           <p className="mt-4 text-gray-600">Loading services...</p>
@@ -350,6 +331,23 @@ export default function ServicesPage() {
           )}
         </div>
       )}
+    </>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <MainLayout>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <p>Loading services...</p>
+            <div className="mt-4 w-8 h-8 border-t-2 border-b-2 border-gray-900 rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      }>
+        <ServicesContent />
+      </Suspense>
     </MainLayout>
   );
 } 
